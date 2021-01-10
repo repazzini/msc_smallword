@@ -1,0 +1,130 @@
+import networkx as nx 
+import matplotlib.pyplot as plt 
+import numpy as np
+import random
+
+#Definindo os parâmetros
+ # Number of neurons 
+P = 0
+tmax = 10000  # tempo maximo de simulacao
+N = 10000
+K =4
+Wmax = 40
+W = 2
+
+mu = 0
+deltaW = 0.025
+tauw  = 400
+tautheta= 9000
+Gamma = 1
+I = 0
+uw = 1
+utheta = 0.1
+Theta = 0
+
+# Gerando vetores zerados
+V = np.zeros(N)
+X = np.zeros(N)
+XX = np.zeros(N)   
+
+#Theta = np.random.uniform(0,0.24,(N))
+#W = np.random.uniform(0,1,(N,N))
+#print (W)
+
+
+# Generate Watt-Strogatz network
+def generate_network(n, k, p):
+    global G
+    G = nx.watts_strogatz_graph(n, k, p) 
+    pos = nx.circular_layout(G) 
+      
+  #  plt.figure(figsize = (12, 12)) 
+  #  nx.draw_networkx(G, pos) 
+  #  plt.savefig("rede.png")
+
+a = []
+b = []
+c = []
+
+texto ="annelead_N_" + str(N) + \
+ " P_" + str(P) + "W_" + str(W) + " viz_" + str(K) +  "mu_" + str(mu) + "deltaW_" + str(deltaW) + "tmax_" + str(tmax)
+ 
+f = open(texto +'.txt','w')
+
+def time_step():
+#    W = 0.
+#    Theta_med = 0.
+    global rho 
+    rho = 0.
+ #   c.append(rho)
+    for i in range(0,N):
+        X[i] = XX[i]
+        somaW = 0.
+        
+        for j in G.neighbors(i):          
+            
+            somaW += W * X[j]
+ 
+
+      #  Theta[i] = Theta[i] - (1/tautheta)*Theta[i] + utheta*Theta[i]*X[i]         
+        V[i] = (I + mu*V[i] + somaW/K)* (1-X[i]) #função potencial
+        PHI = Gamma*(V[i]-Theta) /(1.+ Gamma*(V[i]-Theta))# função disparo
+    
+        rand = random.random()
+        if rand < PHI:
+            XX[i] = 1
+            rho += 1 
+            
+        else:
+            XX[i] = 0
+            
+#        Theta_med += Theta[i]
+                    
+            
+#    W_med = W_med/float(K*N)
+#    Theta_med = Theta_med/float(N)  
+    rho = rho/float(N)
+
+    # se rho eh zero, entao um neuronio aleatorio eh ativado
+    if rho < 1./float(N):
+        X[random.randrange(N)] = 1
+   #     X[temp] = 1       
+              
+    
+    
+        
+    b.append(W)
+    a.append(t)
+    c.append(rhomed/(tmax-0.2*tmax))
+    
+# inicia programa principal  
+    
+X[random.randrange(N)] = 1  # um neuronio aleatorio eh ativado
+#generate_network(N,K,P) #quenched #comentar para o annealed
+for _ in range(Wmax):
+    W += deltaW    
+    rhomed = 0
+    for t in range (1,tmax+1):
+        generate_network(N,K,P) #annealed #comentar para o quenched
+        time_step()
+        rhomed += rho
+       
+        # l1 = str(rho)
+        # f.write(l1)
+        # f.write('')
+        # f.write('\n')
+        if t % 10000 == 0:
+            print("annelead_O que eu estou fazendo: ")
+            print(texto)
+            
+    print(t,rhomed/(tmax-0.2*tmax),W) 
+    l1 = str(W)
+    f.write(l1)
+    f.write(',')
+    l2 = str(rhomed/(tmax-0.2*tmax))
+    f.write(l2+'\n')
+           
+  
+
+    
+f.close()
